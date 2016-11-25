@@ -4,6 +4,8 @@ Simple wrapper over the lxdm ansible role to manage LXD container lifecyle.
 
 `acm` stand for 'ansible container management'.
 
+See the [ansible-lxdm](https://github.com/archf/ansible-lxdm) role.
+
 ## Installation
 
 To install in your path:
