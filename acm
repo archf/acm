@@ -1,0 +1,111 @@
+# ansible lxc container management aliases
+
+#TODO: convert to python3 and create aliases instead
+
+die_with_status ()
+{
+  status=$1
+  shift
+  printf >&2 '%s\n' "$*"
+  exit "$status"
+}
+
+die ()
+{
+  die_with_status 1 "$@"
+}
+
+debug()
+{
+  if [ -n "$debug" ]; then
+    printf "%s\n" "$*" >&2
+  fi
+}
+
+usage()
+{
+  echo "USAGE: $(basename $0) cmd OPTIONS <playbook.yml>"
+  echo
+  echo "  up        start containers"
+  echo "  halt      stop (halt) containers"
+  echo "  restart   restart containers"
+  echo "  freeze    freeze containers"
+  echo "  unfreeze  unfreeze containers"
+  echo "  destroy   destroy containers"
+  echo "  reload    reload container configurations (reprovision)"
+  echo ""
+  echo "OPTIONS:"
+  echo "      -i|--inventory  pass inventory file"
+  echo "      -v|--Verbose    verbose"
+  echo "      -h|--help       show this help menu"
+  echo ""
+  echo " If no inventory file are provided, inventory defaults to localhost"
+  echo "  i.e: localhost ansible_host=localhost ansible_connection=local"
+  echo "  This means that the lxd client used will be the one on localhost"
+  echo
+
+  die
+}
+
+# used to check if playbook does exist
+file_exists()
+{
+  if [ -n $PLAYBOOK ] && [ -e $PLAYBOOK ]; then
+    return 0
+  elif [ -z $PLAYBOOK ]; then
+    echo "error: no playbook supplied, please provide <playbook.yml>"
+    echo ""
+    return 1
+  elif [ ! -e  $PLAYBOOK ]; then
+    echo "error: playbook $PLAYBOOK not found, does file really exists?"
+    echo ""
+    return 1
+  fi
+
+}
+
+parse_args()
+{
+
+  [ $# -eq 0 ] && usage
+
+  ARGS=$*
+
+  while [ $# -gt 0 ]
+  do
+    opt="$1"
+    case "$1" in
+      -i|--inventory) shift; INVENTORY="$1";;
+      -v|--verbose) debug=0;;
+      up|halt|destroy|reload|freeze|unfreeze) STATE="$1";;
+      *.yml|*.yaml) PLAYBOOK="$opt";;
+      -h|--help) usage;;
+      *) die "Unexpected option: $1" ;;
+    esac
+    shift
+  done
+
+  # args post-processing
+  if [ -z $INVENTORY ]; then
+    # the comma is required as it signifies it's a list vs a directory/file
+    INVENTORY="localhost ansible_host=localhost ansible_connection=local,"
+  fi
+
+  debug "---------------- DEBUG INFO ----------------"
+  debug "Received args: $ARGS"
+  debug "inventory file : $INVENTORY"
+  # debug "ansible-playbook inventory args: $INVENTORY"
+  debug "playbook file  : $PLAYBOOK"
+  debug "---------------- DEBUG INFO ----------------"
+
+  return 0
+}
+
+parse_args $@
+
+if file_exists
+then
+  ansible-playbook -i $INVENTORY -e lxdm.yml -e lxdm_state=${STATE} playbook=${PLAYBOOK}
+else
+  usage
+fi
