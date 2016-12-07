@@ -1,3 +1,4 @@
+#!/bin/sh
 # ansible lxc container management aliases
 
 #TODO: convert to python3 and create aliases instead
@@ -50,14 +51,12 @@ usage()
 # used to check if playbook does exist
 file_exists()
 {
-  if [ -n $PLAYBOOK ] && [ -e $PLAYBOOK ]; then
+
+  echo $1
+  if [ -n ${1} ] && [ -f ${_file} ]; then
     return 0
-  elif [ -z $PLAYBOOK ]; then
-    echo "error: no playbook supplied, please provide <playbook.yml>"
-    echo ""
-    return 1
-  elif [ ! -e  $PLAYBOOK ]; then
-    echo "error: playbook $PLAYBOOK not found, does file really exists?"
+  else
+    echo "acm error: playbook ${1} not found, does file really exists?"
     echo ""
     return 1
   fi
@@ -93,9 +92,9 @@ parse_args()
 
   debug "---------------- DEBUG INFO ----------------"
   debug "Received args: $ARGS"
-  debug "inventory file : $INVENTORY"
+  debug "inventory file: $INVENTORY"
   # debug "ansible-playbook inventory args: $INVENTORY"
-  debug "playbook file  : $PLAYBOOK"
+  debug "playbook file: $PLAYBOOK"
   debug "---------------- DEBUG INFO ----------------"
 
   return 0
@@ -103,9 +102,10 @@ parse_args()
 
 parse_args $@
 
-if file_exists
+if [ -f $PLAYBOOK ]
 then
-  ansible-playbook -i $INVENTORY -e lxdm.yml -e lxdm_state=${STATE} playbook=${PLAYBOOK}
+  ansible-playbook -i $INVENTORY lxdm.yml -e "lxdm_state=${STATE} \
+  playbook=${PLAYBOOK}"
 else
-  usage
+  ansible-playbook -i $INVENTORY lxdm.yml -e lxdm_state=${STATE}
 fi
