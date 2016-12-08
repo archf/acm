@@ -16,7 +16,7 @@ make install
 
 ## Usage
 
-See
+See:
 
 ```bash
 acm -h
@@ -25,26 +25,24 @@ acm -h
 ## Useful alias
 
 ```bash
-# start container (akin to vagrant up)
-alias acu="acm up"
+# start container ('u' for up)
+alias acu="acm start"
 
-# start container (akin to vagrant halt)
-alias ach="acm halt"
+# stop container
+alias acs="acm stop"
 
-# start container (akin to vagrant reload)
-alias acu="acm reload"
+# restart container
+alias acr="acm restart"
 
-# start container (akin to vagrant destroy)
-alias acd="acm destroy"
+# delete container
+alias acd="acm delete"
 
 # freeze container
 alias acf="acm freeze"
 
-# unfreeze container
-alias acuf="acm unfreeze"
+# provision container
+alias acp="acm provision"
 ```
 
-This is for the time beeing. The real way should be a python CLI using `pylxd`
-bindings, sourcing and inventory file and using ansible API.
-
-It would be required to inject Dynamic inventory...
+Another way would be with a python CLI using `pylxd` bindings, and the ansible
+API. It would be required to inject Dynamic inventory...

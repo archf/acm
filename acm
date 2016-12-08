@@ -1,7 +1,7 @@
 #!/bin/sh
-# ansible lxc container management aliases
-
-#TODO: convert to python3 and create aliases instead
+#
+# ansible container management using lxd
+#
 
 die_with_status ()
 {
@@ -25,15 +25,15 @@ debug()
 
 usage()
 {
-  echo "USAGE: $(basename $0) cmd OPTIONS <playbook.yml>"
+  echo "USAGE: $(basename $0) cmd OPTIONS <playbook.yml> -- ANSIBLE-PLAYBOOK-OPTS"
   echo
-  echo "  up        start containers"
-  echo "  halt      stop (halt) containers"
+  echo "  start     start containers"
+  echo "  stop      stop containers"
   echo "  restart   restart containers"
+  echo "  provision run provisionner against containers (force provisioning)"
+  echo "  delete    delete containers"
   echo "  freeze    freeze containers"
   echo "  unfreeze  unfreeze containers"
-  echo "  destroy   destroy containers"
-  echo "  reload    reload container configurations (reprovision)"
   echo ""
   echo "OPTIONS:"
   echo "      -i|--inventory  pass inventory file"
@@ -44,6 +44,9 @@ usage()
   echo "  i.e: localhost ansible_host=localhost ansible_connection=local"
   echo "  This means that the lxd client used will be the one on localhost"
   echo
+  echo "ANSIBLE-PLAYBOOK-OPTS:"
+  echo "  Must be valid ansible-playbook options. Those will be passed"
+  echo "  literally to ansible-playbook"
 
   die
 }
@@ -51,38 +54,35 @@ usage()
 # used to check if playbook does exist
 file_exists()
 {
-
   echo $1
   if [ -n ${1} ] && [ -f ${_file} ]; then
     return 0
   else
     echo "acm error: playbook ${1} not found, does file really exists?"
-    echo ""
     return 1
   fi
-
 }
 
-parse_args()
+ parse_args()
 {
 
   [ $# -eq 0 ] && usage
 
-  ARGS=$*
-
   while [ $# -gt 0 ]
   do
-    opt="$1"
     case "$1" in
       -i|--inventory) shift; INVENTORY="$1";;
       -v|--verbose) debug=0;;
-      up|halt|destroy|reload|freeze|unfreeze) STATE="$1";;
-      *.yml|*.yaml) PLAYBOOK="$opt";;
+      stop|halt|start|up|restart|delete|destroy|provision|freeze|unfreeze) cmd="$1";;
+      *.yml|*.yaml) PLAYBOOK="$1";;
       -h|--help) usage;;
+      --) shift; break ;;
       *) die "Unexpected option: $1" ;;
     esac
     shift
   done
+
+  ANSIBLE_OPTS="$@"
 
   # args post-processing
   if [ -z $INVENTORY ]; then
@@ -90,11 +90,23 @@ parse_args()
     INVENTORY="localhost ansible_host=localhost ansible_connection=local,"
   fi
 
+  # convert cmd to match what ansible expects
+  case $cmd in
+    start|up) STATE=started ;;
+    stop|halt) STATE=stopped ;;
+    delete|destroy) STATE=absent ;;
+    restart) STATE=restart ;;
+    provision) STATE=provision ;;
+    freeze) STATE=frozen ;;
+    unfreeze) STATE=started ;;
+    *) die "Got unknown state value: $cmd"
+  esac
+
   debug "---------------- DEBUG INFO ----------------"
   debug "Received args: $ARGS"
   debug "inventory file: $INVENTORY"
-  # debug "ansible-playbook inventory args: $INVENTORY"
   debug "playbook file: $PLAYBOOK"
+  debug "state: $STATE"
   debug "---------------- DEBUG INFO ----------------"
 
   return 0
@@ -102,10 +114,13 @@ parse_args()
 
 parse_args $@
 
-if [ -f $PLAYBOOK ]
+[ -n $debug ] && set -x
+ansible-playbook -i $INVENTORY lxdm.yml ${ANSIBLE_OPTS} -e lxdm_state=${STATE}
+
+if file_exists $PLAYBOOK
 then
-  ansible-playbook -i $INVENTORY lxdm.yml -e "lxdm_state=${STATE} \
-  playbook=${PLAYBOOK}"
-else
-  ansible-playbook -i $INVENTORY lxdm.yml -e lxdm_state=${STATE}
+  if [ ${STATE} = 'provision' ] || [ ${STATE} == 'started' ]
+  then
+    ansible-playbook -i $INVENTORY ${PLAYBOOK} ${ANSIBLE_OPTS}
+  fi
 fi

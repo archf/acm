@@ -1,6 +1,6 @@
 FILES = ~/bin/acm
 
-.PHONY: install update
+.PHONY: install update $(FILES)
 
 update:
 	@git pull --rebase
