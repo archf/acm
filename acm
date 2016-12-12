@@ -18,7 +18,7 @@ die ()
 
 debug()
 {
-  if [ -n "$debug" ]; then
+  if [ -n "$DEBUG" ]; then
     printf "%s\n" "$*" >&2
   fi
 }
@@ -72,7 +72,7 @@ file_exists()
   do
     case "$1" in
       -i|--inventory) shift; INVENTORY="$1";;
-      -v|--verbose) debug=0;;
+      -v|--verbose) DEBUG=0;;
       stop|halt|start|up|restart|delete|destroy|provision|freeze|unfreeze) cmd="$1";;
       *.yml|*.yaml) PLAYBOOK="$1";;
       -h|--help) usage;;
@@ -95,7 +95,7 @@ file_exists()
     start|up) STATE=started ;;
     stop|halt) STATE=stopped ;;
     delete|destroy) STATE=absent ;;
-    restart) STATE=restart ;;
+    restart) STATE=restarted ;;
     provision) STATE=provision ;;
     freeze) STATE=frozen ;;
     unfreeze) STATE=started ;;
@@ -114,12 +114,12 @@ file_exists()
 
 parse_args $@
 
-[ -n $debug ] && set -x
+[ -n "$DEBUG" ] && set -x
 ansible-playbook -i $INVENTORY lxdm.yml ${ANSIBLE_OPTS} -e lxdm_state=${STATE}
 
 if file_exists $PLAYBOOK
 then
-  if [ ${STATE} = 'provision' ] || [ ${STATE} == 'started' ]
+  if [ ${STATE} = 'provision' ] || [ ${STATE} = 'started' ]
   then
     ansible-playbook -i $INVENTORY ${PLAYBOOK} ${ANSIBLE_OPTS}
   fi
