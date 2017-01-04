@@ -1,12 +1,12 @@
-FILES = ~/bin/acm
+BIN = ~/bin/acm
 
-.PHONY: install update $(FILES)
+.PHONY: install update $(BIN)
 
 update:
 	@git pull --rebase
 
-install: $(FILES)
+install: $(BIN)
 
-$(FILES):
-	install -D $(@F) $@
+$(BIN):
+	ln -s $(PWD)/$(@F) $@
 	@echo "All done! Make sure ~/bin is in your PATH"
