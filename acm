@@ -105,8 +105,9 @@ file_exists()
   debug "---------------- DEBUG INFO ----------------"
   debug "Received args: $ARGS"
   debug "inventory file: $INVENTORY"
-  debug "playbook file: $PLAYBOOK"
   debug "state: $STATE"
+  debug "playbook file: $PLAYBOOK"
+  debug "ansible provisioning opts: $ANSIBLE_OPTS"
   debug "---------------- DEBUG INFO ----------------"
 
   return 0
@@ -115,7 +116,7 @@ file_exists()
 parse_args $@
 
 [ -n "$DEBUG" ] && set -x
-ansible-playbook -i $INVENTORY lxdm.yml ${ANSIBLE_OPTS} -e lxdm_state=${STATE}
+ansible-playbook -i $INVENTORY lxdm.yml -e lxdm_state=${STATE}
 
 if file_exists $PLAYBOOK
 then
