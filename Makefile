@@ -8,5 +8,6 @@ update:
 install: $(BIN)
 
 $(BIN):
+	mkdir -p ~/bin
 	ln -s $(PWD)/$(@F) $@
 	@echo "All done! Make sure ~/bin is in your PATH"
