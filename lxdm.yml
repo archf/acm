@@ -1,0 +1,13 @@
+---
+
+# stub play to invoke the lxdm role
+- hosts: lxdhosts
+
+  # vars:
+  #   lxd_profiles:
+  #     config: {
+  #       "security.privileged true" : "true" }
+  #       # "dns.domain": "{{lxdm_dns_domain|default(lxdm_network['dns_domain'])}}"
+
+  roles:
+    - lxdm

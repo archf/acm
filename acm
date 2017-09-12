@@ -102,10 +102,13 @@ file_exists()
     *) die "Got unknown state value: $cmd"
   esac
 
+  lxdm_dir=$( $(dirname realpath $0))
+
   debug "---------------- DEBUG INFO ----------------"
   debug "Received args: $ARGS"
   debug "inventory file: $INVENTORY"
   debug "state: $STATE"
+  debug "lxdm repo dir: $lxdm_dir"
   debug "playbook file: $PLAYBOOK"
   debug "ansible provisioning opts: $ANSIBLE_OPTS"
   debug "---------------- DEBUG INFO ----------------"
@@ -116,7 +119,7 @@ file_exists()
 parse_args $@
 
 [ -n "$DEBUG" ] && set -x
-ansible-playbook -i $INVENTORY lxdm.yml -e lxdm_state=${STATE}
+ansible-playbook -i $INVENTORY $lxdm_dir/lxdm.yml -e lxdm_state=${STATE}
 
 if file_exists $PLAYBOOK
 then
